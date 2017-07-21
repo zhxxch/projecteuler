@@ -137,7 +137,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Precise</FloatingPointModel>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalOptions>/Qpar-report:1 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>C:\Users\user\Source\ling;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

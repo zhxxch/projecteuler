@@ -1,11 +1,9 @@
 #include<stdio.h>
 #include"Header.h"
-/* Problem #586 */
+/* Problem #206 */
 
 int main(int argc, char *argv[]){
-	const long long input = 10000ll;
-	const long long ways = 4ll;
-	printf("f(%lli, %lli) = %lli\n", input, ways, f(input, ways));
-	system("pause");
+    long long ans = find_sqrt();
+    printf("sqrt = %lli, sq = %lli\n", ans, ans*ans);
 	return 0;
 }
