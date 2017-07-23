@@ -1,9 +1,8 @@
 #include<stdio.h>
 #include"Header.h"
-/* Problem #206 */
+/* Problem #202 */
 
 int main(int argc, char *argv[]){
-    long long ans = find_sqrt();
-    printf("sqrt = %lli, sq = %lli\n", ans, ans*ans);
+    printf("%lli\n", count_ConR(bounce_R(12017639147ll)));
 	return 0;
 }

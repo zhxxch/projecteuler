@@ -1,37 +1,41 @@
 #pragma once
-/* Problem 206 */
+/* Problem 202 */
 #include<math.h>
 #include<stdlib.h>
-#include<stdint.h>
 #include<essixtence/check.h>
 #include<essixtence/zxcrypto.h>
 
-const long long target = 10203040506070809;
-const long long upper_bound = 138902663;
-const long long lower_bound = 101010101;
-
-int test_sq(const long long sq){
-    long long v[9];
-    const long long d[9] = {1ll, 100ll, 10000ll, 1000000ll, 100000000ll, 10000000000ll, 1000000000000ll, 100000000000000ll, 10000000000000000ll};
-    const long long hit[9] = {9,8,7,6,5,4,3,2,1};
-    for(int i = 0; i< 9; i++){
-        v[i] = sq/d[i];
-        v[i] = v[i]%10;
-    }
-    for(int i = 0; i< 9; i++){
-        if(v[i] != hit[i])return 0;
-    }
-    return 1;
+inline long long gcd(const long long R, const long long V){
+    if(R*V == 0)return R+V;
+    return (R>V ? gcd(R-V, V) : gcd(R, V-R));
 }
 
-long long find_sqrt(void){
-    long long res = 0, curr_sqrt;
-#pragma omp parallel shared(res)
-#pragma omp for
-    for(curr_sqrt = upper_bound; curr_sqrt > lower_bound; curr_sqrt--){
-        if(test_sq(curr_sqrt*curr_sqrt)){
-            res = curr_sqrt;
-        }
+inline int is_inner(long long R, long long V){
+    return V*2 < R;
+}
+inline int is_c_vertex(long long R, long long V){
+    return (R+V) % 3 == 0;
+}
+inline long long count_bounce(long long R, long long V){
+    const long long RsideCount = V - 1;
+    const long long VsideCound = R - 1;
+    const long long RVsideCount = R - V - 1;
+    return RsideCount + VsideCound + RVsideCount;
+}
+inline long long count_ConR(const long long R){
+    const long long NearestV = (3 - R%3)%3;
+    const long long MaxV = (R+1)/2-1;
+    const long long Count = (MaxV-NearestV)/3+1;
+    long long Discount = 0;
+    long long V = 0;
+#pragma omp parallel shared(Discount)
+#pragma omp for reduction(+: Discount)
+    for(V = NearestV; V<=MaxV; V+=3){
+        if(gcd(R, V)>1)Discount += 1;
     }
-    return res;
+    
+    return 2*(Count - Discount);
+}
+inline long long bounce_R(const long long Bounce){
+    return (Bounce+3)/2;
 }

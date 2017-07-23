@@ -151,9 +151,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\ling\essixtence\zxcrypto.cpp" />
     <ClCompile Include="ProjectEuler.c" />
-    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\ling\essixtence\zxcrypto.h" />
     <ClInclude Include="Header.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
