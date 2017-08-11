@@ -18,15 +18,12 @@
     <ClInclude Include="Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ling\essixtence\zxcrypto.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\ling\essixtence\zxcrypto.cpp">
+    <ClCompile Include="ProjectEuler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ProjectEuler.c">
+    <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
