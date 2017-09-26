@@ -2,8 +2,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    long long N(const long long r);
-    long long dots_in_circle(const long long r);
+    void p213_init(void);
+    void p213_simul(const int EdgeLen, const int Round,
+        const int NumSimul, void* FleaMem, double NumEmpty[]);
+    double avg_empty(double NumEmpty[], const int Num);
 #ifdef __cplusplus
 }
 #endif

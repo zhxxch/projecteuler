@@ -1,17 +1,20 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#define ASSERTEX_LEVEL 0
+#include<assertex.h>
 #include"Header.h"
-#define FORCE_CHECK
-#include<check.h>
+
 int main(int argc, char *argv[]){
-    if(argc < 2){
-        puts("R Missing.");
-        return 0;
-    }
-    CHECK(dots_in_circle(8) == 5)(" = %lli\n", dots_in_circle(5));
-    CHECK(dots_in_circle(12) == 12)(" = %lli\n", dots_in_circle(12));
-    CHECK(dots_in_circle(16) == 21)(" = %lli\n", dots_in_circle(16));
-    printf("Ans = %lli\n", N(atoll(argv[1])));
+    const int NumSimuls = 1000000;
+    const int EdgeLen = 4;
+    const int NumMoves = 1;
+    double *NumEmpty = malloc(sizeof(double)*NumSimuls);
+    void* WorkingMem = malloc(
+        sizeof(float)*(EdgeLen*2 * EdgeLen*2 + NumMoves));
+    p213_init();
+    p213_simul(EdgeLen, NumMoves, NumSimuls, WorkingMem, NumEmpty);
+    double Avg = avg_empty(NumEmpty, NumSimuls);
+    printf("Avg. = %f\n", Avg);
     return 0;
 }
