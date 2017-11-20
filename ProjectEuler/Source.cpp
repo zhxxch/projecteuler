@@ -2,100 +2,52 @@
 #include"Header.h"
 #include<array>
 #include<cmath>
-#include<mkl.h>
 #include<algorithm>
-#include<vector>
-typedef std::array<int, 2> Zvec2;
-typedef std::array<int, 2> Z_unit_vec2;
-
-Zvec2 flea_one_move(Z_unit_vec2 move_constraint, const float Rand){
-    Zvec2 Move = {0,0};
-    if(move_constraint[0] == false){
-        if(move_constraint[1] == false){
-            Move[0] = Rand < 0.25 ? -1 : 1;
-            Move[0] = Rand < 0.5 ? Move[0] : 0;
-            Move[1] = Rand >= 0.75 ? 1 : -1;
-            Move[1] = Rand >= 0.5 ? Move[1] : 0;
-        } else{
-            Move[0] = Rand < 1.0f / 3.0f ? -1 : 1;
-            Move[0] = Rand < 2.0f / 3.0f ? Move[0] : 0;
-            Move[1] = Rand >= 2.0f / 3.0f ? move_constraint[1] : 0;
-        }
-    } else{
-        if(move_constraint[1] == false){
-            Move[0] = Rand < 1.0f / 3.0f ? move_constraint[0] : 0;
-            Move[1] = Rand >= 2.0f / 3.0f ? 1 : -1;
-            Move[1] = Rand >= 1.0f / 3.0f ? Move[1] : 0;
-        } else{
-            Move[0] = Rand < 0.5f ? move_constraint[0] : 0;
-            Move[1] = Rand >= 0.5f ? move_constraint[1] : 0;
-        }
+#include<random>
+#include<chrono>
+#include<zxnoise.h>
+#include<emmintrin.h>
+inline void speck128u128sse(uint64_t Ct[2],
+    const uint64_t Pt[2],
+    const uint64_t Key[2]){
+    __m128i CtKeySr = _mm_loadu_si128((const __m128i*)Pt);
+    __m128i CtKeySl = _mm_loadu_si128((const __m128i*)Key);
+    __m128i CtKeyHi128 = _mm_unpackhi_epi64(CtKeySr, CtKeySl);
+    __m128i CtKeyLo128 = _mm_unpacklo_epi64(CtKeySr, CtKeySl);
+    __m128i RoundKey128 = _mm_set_epi64x(0, 0);
+    __m128i RoundKeyP1128 = _mm_set_epi64x(1, 0);
+    for(int i = 0; i < 32; i++){
+        RoundKey128 = _mm_unpackhi_epi64(CtKeyLo128, RoundKey128);
+        CtKeySr = _mm_srli_epi64(CtKeyHi128, 8);
+        CtKeySl = _mm_slli_epi64(CtKeyHi128, 56);
+        CtKeyHi128 = _mm_xor_si128(CtKeySr, CtKeySl);
+        CtKeyHi128 = _mm_add_epi64(CtKeyHi128, CtKeyLo128);
+        CtKeyHi128 = _mm_xor_si128(CtKeyHi128, RoundKey128);
+        CtKeySr = _mm_srli_epi64(CtKeyLo128, 61);
+        CtKeySl = _mm_slli_epi64(CtKeyLo128, 3);
+        CtKeyLo128 = _mm_xor_si128(CtKeySr, CtKeySl);
+        CtKeyLo128 = _mm_xor_si128(CtKeyLo128, CtKeyHi128);
+        RoundKey128 = _mm_add_epi64(RoundKey128, RoundKeyP1128);
     }
-    return Move;
+    CtKeySr = _mm_unpacklo_epi64(CtKeyLo128, CtKeyHi128);
+    _mm_storeu_si128((__m128i*)Ct, CtKeySr);
 }
-Zvec2 flea_moving(
-    const Zvec2 InitPosit,
-    const float RandomFracs[],
-    const int EdgeLen,
-    const int MovesCount){
-    if(MovesCount == 0)return InitPosit;
-    Z_unit_vec2 MoveConstraint;
-    MoveConstraint[0] = InitPosit[0] == 0 ? 1 : 0;
-    MoveConstraint[0] = InitPosit[0] == (EdgeLen - 1) ? -1 : 0;
-    MoveConstraint[1] = InitPosit[1] == 0 ? 1 : 0;
-    MoveConstraint[1] = InitPosit[1] == (EdgeLen - 1) ? -1 : 0;
-    Zvec2 Movement = flea_one_move(MoveConstraint, *RandomFracs);
-    return flea_moving({InitPosit[0] + Movement[0], InitPosit[1] + Movement[1]},
-        RandomFracs + 1, EdgeLen, MovesCount - 1);
-}
-#include<assertex.h>
-void flea_init_pos(const int EdgeLen, Zvec2 Posit[]){
-    for(int _1 = 0; _1 < EdgeLen; _1++){
-        for(int _2 = 0; _2 < EdgeLen; _2++){
-            Posit[_1*EdgeLen + _2] = {_1, _2};
-        }
+void speckNx128u128(uint64_t Out[], const uint64_t In[],
+    const uint64_t Key[2], const int Num){
+    for(int i = 0; i < Num; i += 2){
+        speck128u128sse(Out + i, In + i, Key);
     }
 }
-int count_empty_cell(const int EdgeLen, Zvec2 FleaPosits[]){
-    std::sort(FleaPosits, FleaPosits + EdgeLen*EdgeLen,
-        [](const Zvec2 a, const Zvec2 b){
-        return a[0] == b[0] ? (a[0] - b[0]) : (a[1] - b[1]);
-    });
-    std::vector<Zvec2> UniqueFleaPosit;
-    UniqueFleaPosit.reserve(EdgeLen*EdgeLen);
-    std::vector<Zvec2>::iterator ZvecArrIt
-        = std::unique_copy(FleaPosits, FleaPosits + EdgeLen*EdgeLen,
-            UniqueFleaPosit.begin(), [](const Zvec2 a, const Zvec2 b){
-        return a == b;
-    });
-    return EdgeLen*EdgeLen
-        - static_cast<int>(std::distance(UniqueFleaPosit.begin(), ZvecArrIt));
-}
-VSLStreamStatePtr VslStream;
-void p213_init(void){
-    if(vslNewStream(&VslStream, VSL_BRNG_NONDETERM, 99)
-        != VSL_STATUS_OK){
-        exit(999);
-    } else return;
-}
-void p213_simul(const int EdgeLen, const int Round,
-    const int NumSimul, void* FleaMem, double NumEmpty[]){
-    if(NumSimul == 0)return;
-    Zvec2 *FleaPosits = static_cast<Zvec2*>(FleaMem);
-    float *RandomMem = reinterpret_cast<float*>(
-        FleaPosits + EdgeLen*EdgeLen);
-    flea_init_pos(EdgeLen, FleaPosits);
-    const int NumRandomFracs = Round;
-    for(int Flea_n = 0; Flea_n < EdgeLen*EdgeLen; Flea_n++){
-        vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, VslStream,
-            NumRandomFracs, RandomMem, 0.0f, 1.0f);
-        FleaPosits[Flea_n]
-            = flea_moving(
-                FleaPosits[Flea_n], RandomMem, EdgeLen, Round);
-    }
-    *NumEmpty = count_empty_cell(EdgeLen, FleaPosits);
-    return p213_simul(EdgeLen, Round, NumSimul - 1, FleaMem, NumEmpty + 1);
-}
-double avg_empty(double NumEmpty[], const int Num){
-    return cblas_dasum(Num, NumEmpty, 1) / Num;
+using heure = std::chrono::high_resolution_clock;
+using ms = std::chrono::milliseconds;
+long long p213_simul(unsigned long long *Mem, const int Num){
+    uint64_t Key[2] = {0x0706050403020100ull, 0x0f0e0d0c0b0a0908ull};
+    uint64_t Pt[2] = {0x7469206564616d20ull, 0x6c61766975716520ull};
+    uint64_t Ct[2];
+    speckNx128u128(Ct, Pt, Key, 2);
+    heure::time_point t0 = heure::now();
+    speckNx128u128(Mem, Mem, Key, Num);
+    heure::time_point t1 = heure::now();
+    printf("Ct: %llx %llx\n", Ct[0], Ct[1]);
+    return std::chrono::duration_cast<ms>(t1 - t0).count();
 }

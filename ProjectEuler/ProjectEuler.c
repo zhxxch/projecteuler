@@ -4,17 +4,10 @@
 #define ASSERTEX_LEVEL 0
 #include<assertex.h>
 #include"Header.h"
-
+const int MB = 1024 * 1024;
 int main(int argc, char *argv[]){
-    const int NumSimuls = 1000000;
-    const int EdgeLen = 4;
-    const int NumMoves = 1;
-    double *NumEmpty = malloc(sizeof(double)*NumSimuls);
-    void* WorkingMem = malloc(
-        sizeof(float)*(EdgeLen*2 * EdgeLen*2 + NumMoves));
-    p213_init();
-    p213_simul(EdgeLen, NumMoves, NumSimuls, WorkingMem, NumEmpty);
-    double Avg = avg_empty(NumEmpty, NumSimuls);
-    printf("Avg. = %f\n", Avg);
+    void* WorkingMem = malloc(1024 * MB);
+    long long dt = p213_simul(WorkingMem, 1024 * MB / sizeof(unsigned long long));
+    printf("dt = %lli\n", dt);
     return 0;
 }
