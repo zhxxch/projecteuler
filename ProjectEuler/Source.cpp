@@ -2,9 +2,13 @@
 #include"Header.h"
 #include<array>
 #include<cmath>
-#include<mkl.h>
 #include<algorithm>
 #include<vector>
+#include<random>
+#include<Random123/philox.h>
+#include<Random123/ReinterpretCtr.hpp>
+#include<Eigen/Dense>
+#include<zxnoise.h>
 typedef std::array<int, 2> Zvec2;
 typedef std::array<int, 2> Z_unit_vec2;
 
@@ -71,13 +75,6 @@ int count_empty_cell(const int EdgeLen, Zvec2 FleaPosits[]){
     return EdgeLen*EdgeLen
         - static_cast<int>(std::distance(UniqueFleaPosit.begin(), ZvecArrIt));
 }
-VSLStreamStatePtr VslStream;
-void p213_init(void){
-    if(vslNewStream(&VslStream, VSL_BRNG_NONDETERM, 99)
-        != VSL_STATUS_OK){
-        exit(999);
-    } else return;
-}
 void p213_simul(const int EdgeLen, const int Round,
     const int NumSimul, void* FleaMem, double NumEmpty[]){
     if(NumSimul == 0)return;
@@ -86,9 +83,21 @@ void p213_simul(const int EdgeLen, const int Round,
         FleaPosits + EdgeLen*EdgeLen);
     flea_init_pos(EdgeLen, FleaPosits);
     const int NumRandomFracs = Round;
+    typedef r123::Philox2x64 rand_counter;
+    rand_counter Randomu128;
+    rand_counter::ctr_type Rctr;
+    rand_counter::ctr_type Rres;
+    rand_counter::key_type R123Key;
+    R123Key.fill(std::random_device()());
+    Rctr.fill(0);
     for(int Flea_n = 0; Flea_n < EdgeLen*EdgeLen; Flea_n++){
-        vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, VslStream,
-            NumRandomFracs, RandomMem, 0.0f, 1.0f);
+        for(int i = 0; i < NumRandomFracs; i += 4){
+            Rres = Randomu128(Rctr.incr(), R123Key);
+            std::memcpy((void*)(RandomMem+i), Rres.begin(), 16);
+        }
+        for(int i = 0; i < NumRandomFracs; i++){
+            RandomMem[i] = ixf01(((const int*)RandomMem)[i]);
+        }
         FleaPosits[Flea_n]
             = flea_moving(
                 FleaPosits[Flea_n], RandomMem, EdgeLen, Round);
@@ -97,5 +106,6 @@ void p213_simul(const int EdgeLen, const int Round,
     return p213_simul(EdgeLen, Round, NumSimul - 1, FleaMem, NumEmpty + 1);
 }
 double avg_empty(double NumEmpty[], const int Num){
-    return cblas_dasum(Num, NumEmpty, 1) / Num;
+    Eigen::Map<Eigen::VectorXd> Vec(NumEmpty, Num);
+    return Vec.mean();
 }
