@@ -142,7 +142,7 @@
       </ForcedIncludeFiles>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AssemblerOutput>NoListing</AssemblerOutput>
+      <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <AdditionalOptions>/favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
