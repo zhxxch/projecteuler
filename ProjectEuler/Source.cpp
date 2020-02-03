@@ -2,11 +2,32 @@
 #include"Header.h"
 #include<array>
 #include<cmath>
-#include<mkl.h>
 #include<algorithm>
 #include<vector>
+#include<random>
+#include<zxnoise.h>
+#include<zxcrypto.h>
+#include<Eigen/Dense>
 typedef std::array<int, 2> Zvec2;
 typedef std::array<int, 2> Z_unit_vec2;
+
+
+
+auto lambda_H	= [](){};
+
+
+
+/*	打油诗朗诵：*/
+/*	一个站着的C++11匿名函数	*/
+auto lambda_V	=
+/*	方括弧	*/	[
+/*	反方括弧	*/	]
+/*	括弧		*/	(
+/*	反括弧	*/	)
+/*	花括弧	*/	{
+/*	反花括弧	*/	}
+/*	分号。	*/	;
+
 
 Zvec2 flea_one_move(Z_unit_vec2 move_constraint, const float Rand){
     Zvec2 Move = {0,0};
@@ -33,6 +54,7 @@ Zvec2 flea_one_move(Z_unit_vec2 move_constraint, const float Rand){
     }
     return Move;
 }
+static int SpeckCtr = 0;
 Zvec2 flea_moving(
     const Zvec2 InitPosit,
     const float RandomFracs[],
@@ -44,11 +66,11 @@ Zvec2 flea_moving(
     MoveConstraint[0] = InitPosit[0] == (EdgeLen - 1) ? -1 : 0;
     MoveConstraint[1] = InitPosit[1] == 0 ? 1 : 0;
     MoveConstraint[1] = InitPosit[1] == (EdgeLen - 1) ? -1 : 0;
-    Zvec2 Movement = flea_one_move(MoveConstraint, *RandomFracs);
+    //Zvec2 Movement = flea_one_move(MoveConstraint, *RandomFracs);
+    Zvec2 Movement = flea_one_move(MoveConstraint, i24u01(speck64u96<12>(MovesCount, SpeckCtr++, 1,2)));
     return flea_moving({InitPosit[0] + Movement[0], InitPosit[1] + Movement[1]},
         RandomFracs + 1, EdgeLen, MovesCount - 1);
 }
-#include<assertex.h>
 void flea_init_pos(const int EdgeLen, Zvec2 Posit[]){
     for(int _1 = 0; _1 < EdgeLen; _1++){
         for(int _2 = 0; _2 < EdgeLen; _2++){
@@ -71,13 +93,14 @@ int count_empty_cell(const int EdgeLen, Zvec2 FleaPosits[]){
     return EdgeLen*EdgeLen
         - static_cast<int>(std::distance(UniqueFleaPosit.begin(), ZvecArrIt));
 }
-VSLStreamStatePtr VslStream;
-void p213_init(void){
-    if(vslNewStream(&VslStream, VSL_BRNG_NONDETERM, 99)
-        != VSL_STATUS_OK){
-        exit(999);
-    } else return;
+void speck_rand(float *Base, const int Num, const int Key){
+    for(int i = 0; i < Num; i++){
+        const long long r = speck64u96(i+0x74614620736e6165ull, Key, 1, 2);
+        Base[i] = i24u01(r);
+        //Base[i + 1] = i24u01(r >> 32);
+    }
 }
+std::random_device HwRng;
 void p213_simul(const int EdgeLen, const int Round,
     const int NumSimul, void* FleaMem, double NumEmpty[]){
     if(NumSimul == 0)return;
@@ -87,8 +110,7 @@ void p213_simul(const int EdgeLen, const int Round,
     flea_init_pos(EdgeLen, FleaPosits);
     const int NumRandomFracs = Round;
     for(int Flea_n = 0; Flea_n < EdgeLen*EdgeLen; Flea_n++){
-        vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, VslStream,
-            NumRandomFracs, RandomMem, 0.0f, 1.0f);
+        //speck_rand(RandomMem, NumRandomFracs, NumSimul*7+Flea_n*19);
         FleaPosits[Flea_n]
             = flea_moving(
                 FleaPosits[Flea_n], RandomMem, EdgeLen, Round);
@@ -97,5 +119,6 @@ void p213_simul(const int EdgeLen, const int Round,
     return p213_simul(EdgeLen, Round, NumSimul - 1, FleaMem, NumEmpty + 1);
 }
 double avg_empty(double NumEmpty[], const int Num){
-    return cblas_dasum(Num, NumEmpty, 1) / Num;
+    Eigen::Map<Eigen::VectorXd> Vec(NumEmpty, Num);
+    return Vec.mean();
 }
